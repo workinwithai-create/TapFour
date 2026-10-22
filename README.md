@@ -1,11 +1,21 @@
 # TapFour
 
+**Tap a rhythm. Get chords.** Open it, hear an 8-second before/after (one tapped note, then the same taps as chords over drums), then:
+
+1. **Pick a vibe**: Late night, Big pop, Lo-fi Sunday or Heartbreak, always in your key. Custom chords live under *Edit chords*.
+2. **Tap along**: press ▶ Play beat (or ● Record for a 4-click count-in) and hit the big TAP pad or Space. The pad shows the chord now and the chord next; the 4-bar strip lights up the bar you're in.
+3. **Export**: *More → Save* downloads the WAV and the chord MIDI.
+
+Takes, timing, sound mix, backing (drums+bass+strings / drums only / just a click, all real pinned samples), devices and the license all live in the *More* drawer. The first-run demo and the 3-step guide are remembered in localStorage (`tapfour-intro-seen`, `tapfour-guide-done`).
+
+## Details
+
 **Tap the rhythm, get your chords.** You know the rhythm your chords should hit, but you can't play them, and drawing blocks in a piano roll kills the vibe. In TapFour you type your BPM, key and 4 chords, then tap the rhythm on **any one key**, Space, an on-screen pad, or a MIDI keyboard or pad over a real band. Every tap becomes that bar's chord, voice-led on a real piano.
 
 - **Hold = length, hit = velocity, height = voicing.** Hold a tap and the chord rings for as long as you hold. Velocity comes through from MIDI. Below middle C gives a low voicing, C4 to B4 a mid voicing, and C5 and up a high one. On a computer, J, K/Space and L do the same. The sustain pedal (CC64) holds chords.
-- **Your loop first.** BPM is 60 to 180, there are 12 keys, and the 4-chord entry takes chords like `Am7 Dm7 G Cmaj7` (m, 7, m7, maj7, dim, sus2, sus4). These settings persist in localStorage and are used for playback and every export. The presets are only demos.
+- **Your loop first.** BPM is 60 to 180, there are 12 keys, and the 4-chord entry takes chords like `Am7 Dm7 G Cmaj7` (m, 7, m7, maj7, dim, sus2, sus4). These settings persist in localStorage and are used for playback and every export. Vibe presets are written from the tonic and always land in your chosen key.
 - **Looping recorder.** Press ● Record for a one-bar count-in. The loop then runs until you stop it, and **each 4-bar pass becomes its own take**. Each take can be set to Loop or Silent, muted, renamed, edited on the grid or deleted. By default the newest take loops and older ones go silent; turn on "Layer" to stack them. Takes persist, up to 16.
-- **Recipes.** Choose Snap to 16ths, Snap to 8ths, Your feel (no quantize), or Push the changes, where a tap in the last 8th of a bar plays the next chord. Legato is optional: a new tap cuts the last chord. One pure function feeds live playback, the WAV and the MIDI.
+- **Recipes.** Choose Tidy (snap to 16ths), Extra tidy (8ths), Exactly as I played (no quantize), or Change early (push), where a tap in the last 8th of a bar plays the next chord. Legato is optional: a new tap cuts the last chord. One pure function feeds live playback, the WAV and the MIDI.
 - **Live play-along.** Tap mode is the default: any key plays the current bar's chord. Note modes let you play piano, electric piano, finger bass or string pad with velocity and sustain. Notes never start the transport. MIDI Start and Stop only run it if you opt in. Web MIDI in and out device selects persist. MIDI out sends bass on ch1, chords on ch2, pad on ch3 and kit on ch10.
 - **Audio output select.** Uses `AudioContext.setSinkId` where the browser supports it. Otherwise the app says it is using the system output. There is no audio input; TapFour doesn't use the mic.
 - **Chairs (real samples, pinned).** Acoustic grand piano, electric piano, finger bass and string ensemble come from FluidR3_GM (Frank Wen, CC BY 3.0): `gleitz/midi-js-soundfonts@044fab8e1456bfafc5776e86dfd6bb8697149aef`. The backing kit (kick, snare and closed hi-hat) is Virtuosity Drums, CC0: `sfzinstruments/virtuosity_drums@9f04cf9a734527edfbb0a4eee1f674e45bbf71bc`. Every semitone used is sampled, so nothing is pitch-shifted, and the engine refuses any shift beyond ±4 semitones. If a sample fails to load, the app names the missing instrument and disables play, record and export.

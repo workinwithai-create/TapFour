@@ -24,16 +24,19 @@ const KITMAP = { 36:"kickmic/kick/kickmic_kick_snoff_vl3_rr1.flac", 38:"mid/snar
 const KITNAME = { 36:"kick", 38:"snare", 42:"closed hi-hat" };
 const LIFTS = ["low","mid","high"];
 const recipes = [
-  { id:"sixteenths", name:"Snap to 16ths", blurb:"Every tap and every release on the nearest 16th. The default." },
-  { id:"eighths", name:"Snap to 8ths", blurb:"Tighter, simpler: starts and lengths on 8th notes." },
-  { id:"raw", name:"Your feel", blurb:"No quantize. Your exact timing and lengths." },
-  { id:"push", name:"Push the changes", blurb:"16ths, and a tap in the last 8th of a bar plays the NEXT chord (anticipation)." },
+  { id:"sixteenths", name:"Tidy", blurb:"Gently lines your taps up with the beat. Best for most people." },
+  { id:"eighths", name:"Extra tidy", blurb:"Lines taps up more firmly, for a simpler, steadier rhythm." },
+  { id:"raw", name:"Exactly as I played", blurb:"No tidying. Your exact timing and lengths." },
+  { id:"push", name:"Change early", blurb:"Tidy, and a tap just before a new bar already plays the next chord." },
 ];
+// Vibes: named progressions written from the tonic; they always play in the key you picked (keyRoot).
 const grooves = [
-  { id:"dusty", name:"Dusty Room", bpm:92, chords:"Am7 Dm7 G Cmaj7" },
-  { id:"lofi",  name:"Lo-fi Desk", bpm:76, chords:"Fmaj7 Em7 Dm7 Cmaj7" },
-  { id:"bounce",name:"Bounce Back", bpm:100, chords:"Cm Ab Eb Bb" },
+  { id:"dusty",  name:"Late night", mood:"moody, warm", bpm:92, chords:"Am7 Dm7 G Cmaj7" },
+  { id:"anthem", name:"Big pop", mood:"bright, singalong", bpm:104, chords:"C G Am F" },
+  { id:"lofi",   name:"Lo-fi Sunday", mood:"soft, jazzy", bpm:78, chords:"Cmaj7 Am7 Dm7 G7" },
+  { id:"heart",  name:"Heartbreak", mood:"sad, cinematic", bpm:84, chords:"Am F C G" },
 ];
+const vibeNames = (g, key) => { const pr=parseProg(g.chords), t=pc(key-pr[0].root); return pr.map(c=>NAMES[pc(c.root+t)]+c.name.replace(/^[A-G](#|b)?/,"")); };
 const QUAL = {"":[0,4,7], m:[0,3,7], min:[0,3,7], "7":[0,4,7,10], m7:[0,3,7,10], maj7:[0,4,7,11], dim:[0,3,6], sus2:[0,2,7], sus4:[0,5,7]};
 const ROOT = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const pc = x => ((x%12)+12)%12;
@@ -41,7 +44,7 @@ const inRange = (n,lo,hi) => { while(n<lo) n+=12; while(n>hi) n-=12; return n; }
 
 // ---------- state (one mutable object, persisted) ----------
 const DEFAULT = { bpm:92, keyRoot:9, chords:"Am7 Dm7 G Cmaj7", groove:"dusty", recipe:"sixteenths", bars:8, audioOut:"", chordInst:"piano", legato:true,
-  recClick:true, layer:false, pitchLift:true,
+  recClick:true, layer:false, pitchLift:true, beat:"band",
   mutes:{chords:false,bass:false,pad:false,kit:false}, gains:{chords:0.75,bass:0.8,pad:0.22,kit:0.7},
   midiIn:"", midiOut:"", midiTransport:false, liveInst:"tap", liveOct:4, liveGain:0.9 };
 const state = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(APP+"-settings")||"{}"));
@@ -101,9 +104,11 @@ function chordSteps(st, rec, only){ // -> Map(step -> [{note, vel, off, dur}]) f
 function stepEvents(step, st, pr, opt){
   opt=opt||{}; const out=[], bar=Math.floor(step/STEPS), s=step%STEPS, c=chordAtBar(bar,st,pr), root=c.root;
   const b=inRange(28+pc(root-28),28,39), pv=c.ivs.slice(0,4).map(iv=>inRange(57+pc(root+iv-57),57,70)).sort((x,y)=>x-y);
-  if(!st.mutes.bass){ if(s===0) out.push({part:"bass",src:"bass",note:b,dur:6,vel:0.95}); if(s===8) out.push({part:"bass",src:"bass",note:b,dur:4,vel:0.8}); if(s===14) out.push({part:"bass",src:"bass",note:b+12,dur:2,vel:0.6}); }
-  if(!st.mutes.pad && s===0) for(const n of pv) out.push({part:"pad",src:"pad",note:n,dur:16,vel:0.5});
-  if(!st.mutes.kit){ if(s===0||s===10) out.push({part:"kit",src:"kit",note:36,dur:1,vel:s?0.75:0.95}); if(s===4||s===12) out.push({part:"kit",src:"kit",note:38,dur:1,vel:0.8});
+  const beat=st.beat||"band", band=beat==="band";
+  if(band && !st.mutes.bass){ if(s===0) out.push({part:"bass",src:"bass",note:b,dur:6,vel:0.95}); if(s===8) out.push({part:"bass",src:"bass",note:b,dur:4,vel:0.8}); if(s===14) out.push({part:"bass",src:"bass",note:b+12,dur:2,vel:0.6}); }
+  if(band && !st.mutes.pad && s===0) for(const n of pv) out.push({part:"pad",src:"pad",note:n,dur:16,vel:0.5});
+  if(!st.mutes.kit && beat==="click"){ if(s%4===0) out.push({part:"kit",src:"kit",note:42,dur:1,vel:s?0.4:0.65}); }
+  else if(!st.mutes.kit){ if(s===0||s===10) out.push({part:"kit",src:"kit",note:36,dur:1,vel:s?0.75:0.95}); if(s===4||s===12) out.push({part:"kit",src:"kit",note:38,dur:1,vel:0.8});
     if(s%2===0) out.push({part:"kit",src:"kit",note:42,dur:1,vel:s%4?0.35:0.5}); }
   if(!st.mutes.chords && !opt.noChords){ const k=chordSteps(st, opt.rec, opt.only).get(step%L); if(k) for(const h of k) out.push({part:"chords",src:st.chordInst,note:h.note,dur:h.dur,vel:h.vel,off:h.off}); }
   return out;
@@ -125,8 +130,8 @@ function showLoad(){
   const el = document.getElementById("status"); if(!el) return;
   if (missing.size) { el.className="status miss"; const inst=[...new Set([...missing].map(m=>m.replace(/ \(.*$/,"")))];
     el.textContent = `Missing instruments, playback and export disabled: ${inst.join(", ")} — ${missing.size} file(s) failed, e.g. ${[...missing].slice(0,3).join(", ")}`; }
-  else el.textContent = loadDone ? `Piano and band seated ${loaded}/${files.length} · live FluidR3 + CC0 kit` : `Seating piano and band ${loaded}/${files.length}`;
-  const ok = loadDone && !missing.size; ["playA","playB","recBtn","recBtn2","exportWav","exportMid","exportStems"].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ok; });
+  else el.textContent = loadDone ? `Ready: piano and drums seated ${loaded}/${files.length}. Press ▶ Play beat, then tap the big pad.` : `Loading the piano and drums ${loaded}/${files.length}…`;
+  const ok = loadDone && !missing.size; ["playA","playB","recBtn","demoAgain","exportWav","exportMid","exportStems"].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ok; });
 }
 async function decodeAll(c){ // -> {id:{note:{buf,offset}}}; offset skips MP3 encoder padding so notes land on the grid
   const out={};
@@ -161,6 +166,7 @@ function voice(c, bufs, dest, ev, t, sd, track){
     else { s.stop(off+rel+0.01); srcs.push(s); break; }
   }
   if(track) for(const s of srcs){ active.add(s); s.onended=()=>active.delete(s); }
+  return srcs;
 }
 function makeComp(c){ const k=c.createDynamicsCompressor(); k.threshold.value=-8; k.knee.value=6; k.ratio.value=12; k.attack.value=0.003; k.release.value=0.15; return k; }
 function buildBus(c, gains){ const comp=makeComp(c), master=c.createGain(); comp.connect(master); master.connect(c.destination); const chairs={};
@@ -176,7 +182,7 @@ async function ensureCtx(){
 let passNo=0;
 async function start(m){
   if(!ctx||ctx.state!=="running"||!liveBufs||missing.size) return;
-  stop(); const mk = m==="band" ? await makeupGain() : 1; bus.master.gain.setValueAtTime(mk, ctx.currentTime); mode=m;
+  if(introOn) endIntro(); stop(); const mk = m==="band" ? await makeupGain() : 1; bus.master.gain.setValueAtTime(mk, ctx.currentTime); mode=m;
   nextStepTime=ctx.currentTime+0.1; step=0; stepLog.length=0; playing=true; passNo=0;
   timerId=setInterval(scheduler, LOOKAHEAD_MS); scheduler(); requestAnimationFrame(draw); paintDock();
 }
@@ -195,7 +201,7 @@ function stop(){
   clearInterval(timerId); timerId=null; playing=false; mode=null;
   for(const s of active){ try{ s.stop(); }catch(e){} } active.clear();
   if(midiOut) for(const c of CHAIRS) midiOut.send([0xB0|c.ch,123,0]);
-  document.querySelectorAll(".gbar").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".gbar").forEach(b=>b.classList.remove("active")); paintFace(0,0,false,true);
   if(wasRec) finishRec(stopAt);
   paintDock();
 }
@@ -203,7 +209,8 @@ function draw(){ // playhead from ctx.currentTime
   if(!playing) return; const now=ctx.currentTime; let cur=null;
   for(const e of stepLog){ if(e.time<=now) cur=e; else break; }
   if(cur){ const fr=(cur.s+Math.min(1,(now-cur.time)/(60/state.bpm/4)))/STEPS;
-    document.querySelectorAll(".gbar").forEach((el,i)=>{ el.classList.toggle("active",i===cur.bar); if(i===cur.bar) el.querySelector(".ph").style.left=(fr*100)+"%"; }); }
+    document.querySelectorAll(".gbar").forEach((el,i)=>{ el.classList.toggle("active",i===cur.bar); if(i===cur.bar) el.querySelector(".ph").style.left=(fr*100)+"%"; });
+    paintFace(cur.bar, fr, mode==="rec" && cur.pass<1); }
   updateHint(); requestAnimationFrame(draw);
 }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"){ if(playing){ stop(); setStatus("Stopped (tab hidden). Press play to start again."); } liveAllOff(); } });
@@ -235,7 +242,7 @@ async function renderLoop(o, noNorm){
 }
 // A (band only) and B (band + your chords) play at matched loudness: makeup gain measured offline on the same 4 bars
 let mkCache={key:null,v:1};
-async function makeupGain(){ const key=JSON.stringify([takesVer,state.recipe,state.legato,state.gains,state.mutes,state.chords,state.keyRoot,state.bpm,state.chordInst]);
+async function makeupGain(){ const key=JSON.stringify([takesVer,state.recipe,state.legato,state.gains,state.mutes,state.chords,state.keyRoot,state.bpm,state.chordInst,state.beat]);
   if(mkCache.key===key) return mkCache.v;
   try{ const rms=r=>{ let s=0; for(const d of r.ch) for(let i=0;i<r.N;i++) s+=d[i]*d[i]; return Math.sqrt(s/(2*r.N)); };
     const a=await renderLoop({bars:4,mutes:{chords:true}},true), b=await renderLoop({bars:4},true);
@@ -373,7 +380,7 @@ function addTake(hits, src){
   const tk={id:Date.now()+"-"+n,n,name:"Take "+n,mode:"loop",muted:false,src,bpm:state.bpm,hits};
   takes.push(tk); editIdx=takes.length-1; saveTakes(); renderTakes(); paintGrid(); return tk; }
 async function startRec(){
-  await ensureCtx(); if(!liveBufs) return; stop();
+  await ensureCtx(); if(!liveBufs) return; if(introOn) endIntro(); stop();
   if(state.liveInst!=="tap"){ state.liveInst="tap"; save(); syncInputs(); renderKeys(); }
   recPasses=[]; passTaps=new Map(); openTaps=new Map();
   bus.master.gain.setValueAtTime(1, ctx.currentTime);
@@ -381,12 +388,13 @@ async function startRec(){
   for(let i=0;i<4;i++) voice(ctx, liveBufs, bus.chairs.kit, {src:"kit",note:i?42:38,dur:1,vel:i?0.6:0.85}, T0-bd+i*bd/4, 60/state.bpm/4, true); // count-in
   mode="rec"; nextStepTime=T0; step=0; stepLog.length=0; playing=true; passNo=0; ui.bpm.disabled=true;
   timerId=setInterval(scheduler, LOOKAHEAD_MS); requestAnimationFrame(draw); paintDock();
-  setStatus("Recording: one bar count-in, then tap your chord rhythm (Space, J K L, the pads, or any MIDI key). Every 4-bar pass becomes a new take. Press Stop when done.");
+  setStatus("Recording. Wait for the 4 count-in clicks, then tap. Every time the 4 bars loop you get a new take. Press ■ Stop when you're done.");
+  paintFace(0,0,true,true);
 }
 function finishRec(stopAt){
   for(const [k] of [...openTaps]) recTapOff(k,stopAt);
   for(const p of recPasses) if(!p.done && stopAt>p.time) finishPass(p);
-  recPasses=[]; ui.bpm.disabled=false; setStatus(takes.length?`${takes.length} take${takes.length>1?"s":""} saved. Press B to hear your chords with the band.`:"No taps recorded. Press ● Record and tap after the count-in.");
+  recPasses=[]; ui.bpm.disabled=false; setStatus(takes.length?`${takes.length} take${takes.length>1?"s":""} saved. Press ▶ Play beat to hear it, or More → Save to download.`:"No taps recorded. Press ● Record and tap after the 4 count-in clicks.");
 }
 
 // ---------- audio output device (AudioContext.setSinkId where supported) ----------
@@ -404,17 +412,17 @@ if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener) navigator.me
 
 // ---------- UI ----------
 const ui={}; ["audioOut","audioOutNote","bpm","key","chords","chordErr","bars","recClick","layer","legato","pitchLift","chordInst",
-  "midiIn","midiOut","midiNote","midiTransport","liveInst","liveGainIn","licKey","licBtn","tap","tapBtn","takes","takeInfo","grid","gridTitle","pads","miniKeys","liveHint","liveOctLbl"].forEach(id=>ui[id]=document.getElementById(id));
+  "midiIn","midiOut","midiNote","midiTransport","beat","strip","more","liveInst","liveGainIn","licKey","licBtn","tap","tapBtn","takes","takeInfo","grid","gridTitle","pads","miniKeys","liveHint","liveOctLbl"].forEach(id=>ui[id]=document.getElementById(id));
 ui.key.innerHTML=NAMES.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
 function syncInputs(){ ui.bpm.value=state.bpm; ui.key.value=state.keyRoot; ui.chords.value=state.chords; ui.bars.value=state.bars;
   ui.recClick.checked=state.recClick; ui.layer.checked=state.layer; ui.legato.checked=state.legato; ui.pitchLift.checked=state.pitchLift; ui.chordInst.value=state.chordInst;
-  ui.midiTransport.checked=state.midiTransport; ui.liveInst.value=state.liveInst; ui.liveGainIn.value=state.liveGain; }
+  ui.beat.value=state.beat||"band"; ui.midiTransport.checked=state.midiTransport; ui.liveInst.value=state.liveInst; ui.liveGainIn.value=state.liveGain; }
 function onChords(){ const p=parseProg(ui.chords.value); if(!p){ ui.chordErr.textContent="Exactly 4 chords, e.g. Am7 Dm7 G Cmaj7 (m, 7, m7, maj7, dim, sus2, sus4)"; return; }
   ui.chordErr.textContent=""; const t=transpose(); prog=p; state.chords=ui.chords.value.trim(); state.keyRoot=pc(p[0].root+t); ui.key.value=state.keyRoot; save(); render(); }
 function cards(id, list, on, label, click){ const el=document.getElementById(id); el.innerHTML="";
   list.forEach(x=>{ const b=document.createElement("button"); b.className="card"+(on(x)?" on":""); b.dataset.id=x.id; b.innerHTML=label(x); b.onclick=()=>click(x); el.appendChild(b); }); }
-function paintGrooves(){ cards("grooves",grooves,g=>state.groove===g.id,g=>`<b>${g.name}</b><span>${g.bpm} BPM · ${g.chords}</span>`,
-  g=>{ if(mode==="rec") return; state.groove=g.id; state.bpm=g.bpm; state.chords=g.chords; prog=parseProg(g.chords); state.keyRoot=prog[0].root; save(); syncInputs(); render(); }); }
+function paintGrooves(){ cards("grooves",grooves,g=>state.groove===g.id&&state.chords===vibeNames(g,prog[0].root).join(" "),g=>`<b>${g.name}</b><span>${g.mood}</span><em>${vibeNames(g,state.keyRoot).join(" · ")}</em>`,
+  g=>{ if(mode==="rec") return; state.groove=g.id; state.bpm=g.bpm; state.chords=vibeNames(g,state.keyRoot).join(" "); prog=parseProg(state.chords); vlCache.key=null; save(); syncInputs(); render(); }); }
 function paintRecipes(){ cards("recipes",recipes,r=>state.recipe===r.id,r=>`<b>${r.name}</b><span>${r.blurb}</span>`,r=>{ state.recipe=r.id; save(); render(); }); }
 function paintChairs(){ const el=document.getElementById("chairs"); el.innerHTML="";
   CHAIRS.forEach(c=>{ const d=document.createElement("div"); d.className="chair"+(state.mutes[c.id]?" muted":"");
@@ -445,10 +453,22 @@ ui.takes.addEventListener("change",e=>{ const row=e.target.closest(".take"); if(
 ui.takes.addEventListener("click",e=>{ const a=e.target.dataset.act; if(a!=="del"&&a!=="edit") return; const i=+e.target.closest(".take").dataset.i, t=takes[i];
   if(a==="edit"){ editIdx=i; renderTakes(); paintGrid(); return; }
   if(!confirm(`Delete ${t.name}? This can't be undone.`)) return; takes.splice(i,1); if(editIdx>=takes.length) editIdx=takes.length-1; saveTakes(); renderTakes(); paintGrid(); });
-function paintDock(){ for(const b of [document.getElementById("recBtn"),document.getElementById("recBtn2")]) if(b){ b.textContent = mode==="rec" ? "■ Stop recording" : "● Record"; b.classList.toggle("recording",mode==="rec"); } }
+function paintDock(){ const pb=document.getElementById("playB"); if(pb) pb.classList.toggle("on",playing&&mode==="full"); if(ui.liveHint) updateHint(true);
+  for(const b of [document.getElementById("recBtn")]) if(b){ b.textContent = mode==="rec" ? "■ Stop recording" : "● Record"; b.classList.toggle("recording",mode==="rec"); } }
 // tap pads (low / mid / high) + mini keys
 const PADKEYS=["j","k","l"];
-ui.pads.innerHTML=LIFTS.map((c,i)=>`<button class="pad ${i===1?"tapbig":""}" data-n="${i}" data-pad="${c}">Tap ${c}<i>${PADKEYS[i].toUpperCase()}${i===1?" · Space":""}</i></button>`).join("");
+ui.pads.innerHTML=`<button class="pad side" data-n="0" data-pad="low" aria-label="Tap a lower chord">Lower<i>J</i></button>`+
+  `<button class="pad tapbig" data-n="1" data-pad="mid" aria-label="Tap"><span class="tapword">TAP</span><b id="nowChord">Am7</b><small id="nextChord">next: Dm7</small><i>or press Space</i></button>`+
+  `<button class="pad side" data-n="2" data-pad="high" aria-label="Tap a higher chord">Higher<i>L</i></button>`;
+// the 4-bar strip + the chord now / next on the pad
+function paintStrip(){ ui.strip.innerHTML=[0,1,2,3].map(b=>`<div class="sbar" data-b="${b}"><span>Bar ${b+1}</span><b>${chordName(b)}</b><i class="fill"></i></div>`).join(""); }
+let faceKey="";
+function paintFace(bar,fr,countIn,force){ const b=((bar%4)+4)%4, k=b+"|"+countIn+"|"+state.chords+state.keyRoot+"|"+playing;
+  document.querySelectorAll(".sbar").forEach((el,i)=>{ const f=el.querySelector(".fill"); if(f) f.style.width = playing&&!countIn ? (i<b?100:i===b?fr*100:0)+"%" : "0%"; });
+  if(k===faceKey&&!force) return; faceKey=k;
+  const now=document.getElementById("nowChord"), nx=document.getElementById("nextChord"); if(!now) return;
+  now.textContent = countIn ? "Get ready…" : chordName(b); nx.textContent = countIn ? "first chord: "+chordName(0) : "next: "+chordName((b+1)%4);
+  document.querySelectorAll(".sbar").forEach((el,i)=>el.classList.toggle("on",playing&&!countIn&&i===b)); }
 const KEYMAP="awsedftgyhujk"; const kbBase=()=>12*(state.liveOct+1);
 function renderKeys(){ const base=kbBase();
   ui.miniKeys.innerHTML=[...Array(13)].map((_,i)=>{ const n=base+i, blk=[1,3,6,8,10].includes(i%12);
@@ -458,8 +478,8 @@ function keyVis(n,on,src,lift){ const k = (src==="pad"||src==="key") ? document.
   if(k) k.classList.toggle("down",on); if(!on&&state.liveInst==="tap") document.querySelectorAll(".pad.down").forEach(x=>{ if(![...liveVoices.values()].length) x.classList.remove("down"); }); }
 let hintKey="";
 function curBar(){ if(!playing||!ctx) return 0; const now=ctx.currentTime; let cur=null; for(const e of stepLog){ if(e.time<=now) cur=e; else break; } return cur?cur.bar:0; }
-function updateHint(force){ const b=curBar(), k=state.liveInst+b+state.keyRoot+state.chords; if(k===hintKey&&!force) return; hintKey=k;
-  if(state.liveInst==="tap"){ ui.liveHint.innerHTML=`Tap mode: any key plays <b>${chordName(b%4)}</b> (the current bar's chord), voice-led. MIDI keys below middle C = low voicing, C4–B4 = mid, C5 and up = high. Hold = chord length.`; return; }
+function updateHint(force){ const b=curBar(), k=state.liveInst+b+state.keyRoot+state.chords+playing; if(k===hintKey&&!force) return; hintKey=k;
+  if(state.liveInst==="tap"){ ui.liveHint.innerHTML=playing?`Tap to the beat. Hold longer for a longer chord. <b>Lower</b> / <b>Higher</b> (J / L) move the chord down or up.`:`Press <b>▶ Play beat</b> and tap along, or <b>● Record</b> to keep it. A MIDI keyboard works too: any key plays the chord.`; return; }
   const c=chordAtBar(b,state,prog); ui.liveHint.innerHTML=`Key <b>${NAMES[state.keyRoot]} ${prog[0].minor?"minor":"major"}</b> · now <b>${chordName(b%4)}</b>: chord tones <b>${c.tones.map(t=>NAMES[t]).join(" ")}</b>`;
   document.querySelectorAll(".mk").forEach(el=>{ const p=pc(+el.dataset.n); el.classList.toggle("tone",c.tones.includes(p)); el.classList.toggle("root",p===c.tones[0]); }); }
 function pointerKeys(box, sel){ const down=new Map();
@@ -479,9 +499,10 @@ document.addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
   const i=KEYMAP.indexOf(k); if(i>=0) liveOff(kbBase()+i,"kb"); });
 window.addEventListener("blur",()=>{ for(const [k] of [...liveVoices]) if(/^(kb|tap|key|pad):/.test(k)) liveOff(+k.split(":")[1],k.split(":")[0]); });
 
-function render(){ updateHint(true); paintGrooves(); paintRecipes(); paintChairs(); paintGrid(); renderTakes(); }
+function render(){ updateHint(true); paintStrip(); paintFace(curBar(),0,false,true); paintGrooves(); paintRecipes(); paintChairs(); paintGrid(); renderTakes(); }
 ui.bpm.addEventListener("change",()=>{ const v=Math.round(+ui.bpm.value); if(!(v>=60&&v<=180)||mode==="rec"){ ui.bpm.value=state.bpm; return; } state.bpm=v; save(); render(); });
 ui.key.addEventListener("change",()=>{ state.keyRoot=+ui.key.value; save(); render(); });
+ui.beat.addEventListener("change",()=>{ state.beat=ui.beat.value; save(); });
 ui.chords.addEventListener("change",onChords);
 ui.bars.addEventListener("change",()=>{ state.bars=+ui.bars.value; save(); });
 ui.recClick.addEventListener("change",()=>{ state.recClick=ui.recClick.checked; save(); });
@@ -507,13 +528,15 @@ document.getElementById("playA").onclick=go("band");
 document.getElementById("playB").onclick=go("full");
 document.getElementById("stop").onclick=stop;
 const recClick = ()=>{ if(mode==="rec"){ stop(); return; } startRec(); };
-document.getElementById("recBtn").onclick=recClick; document.getElementById("recBtn2").onclick=recClick;
+document.getElementById("recBtn").onclick=recClick;
 document.getElementById("exportWav").onclick=async()=>{ if(gated()){ setStatus("Demo: 4-bar WAV export. Unlock below for 8/16 bars."); return; }
   setStatus("Rendering…"); try{ const r=await exportWavBytes(); download(r.bytes,r.name,"audio/wav"); setStatus("Saved "+r.name); }catch(e){ setStatus("Export failed: "+e.message); } };
 document.getElementById("exportMid").onclick=()=>{ const r=exportMidBytes(); download(r.bytes,r.name,"audio/midi"); setStatus("Saved "+r.name); };
 document.getElementById("exportStems").addEventListener("click",async()=>{ if(gated()){ setStatus("Demo: 4-bar take stems. Unlock below for 8/16 bars."); return; }
   setStatus("Rendering take stems…"); try{ const r=await exportStemsBytes(); download(r.zip,r.name,"application/zip"); setStatus(`Saved ${r.name} (${r.files.length} take WAVs)`); }catch(e){ setStatus("Stems export failed: "+e.message); } });
-ui.tapBtn.onclick=async()=>{ ui.tapBtn.textContent="Starting…"; await ensureCtx(); if(ctx.state==="running") ui.tap.classList.add("hide"); showLoad(); };
+ui.tapBtn.onclick=async()=>{ ui.tapBtn.textContent="Starting…"; const first=!localStorage.getItem(INTRO_KEY);
+  if(first){ ui.tap.classList.add("hide"); playIntroDemo(); return; }
+  await ensureCtx(); if(ctx.state==="running") ui.tap.classList.add("hide"); showLoad(); };
 ui.licBtn.onclick=async()=>{ const k=ui.licKey.value.trim(); if(!k) return; const st=document.getElementById("licState"); st.textContent="Checking…";
   try{ const r=await activateKey(k); if(r.ok){ Object.assign(lic,{valid:true,key:k,instance:r.instance,checked:Date.now()}); saveLic(); licUI(); } else st.textContent=r.reason; }
   catch(e){ st.textContent="Could not reach Lemon Squeezy. Check your connection and try again."; } };
@@ -521,7 +544,41 @@ document.getElementById("licOff").onclick=async()=>{ if(lic.key&&lic.instance&&c
 { const buy=document.getElementById("buy"); if(LEMON.checkoutUrl){ buy.href=LEMON.checkoutUrl; buy.textContent="Buy TapFour · "+LEMON.price; } else { buy.removeAttribute("href"); buy.setAttribute("aria-disabled","true"); buy.textContent="Checkout opening soon · "+LEMON.price; } }
 if(lic.valid&&lic.key) validateKey(lic.key,lic.instance).then(v=>{ lic.valid=v; lic.checked=Date.now(); saveLic(); licUI(); }).catch(()=>{});
 if(/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)) document.querySelectorAll(".ios").forEach(e=>e.hidden=false);
-window.__tapfour = { state, stepEvents, takeHits, voicing, addTake, exportWavBytes, exportMidBytes, exportStemsBytes, loadAll, start:m=>start(m), stop, startRec, files, takes, DEMO,
+// ---------- first run: headline + before/after demo, then a 3-step guide (both remembered) ----------
+const INTRO_KEY=APP+"-intro-seen", GUIDE_KEY=APP+"-guide-done";
+let introTimers=[], introOn=false, introSrcs=[];
+async function playIntroDemo(){
+  const box=document.getElementById("intro"), big=document.getElementById("demoBig"), small=document.getElementById("demoSmall"), dp=document.getElementById("demoPad");
+  const bb=document.getElementById("phBefore"), ba=document.getElementById("phAfter");
+  box.hidden=false; introOn=true; big.textContent="Loading the piano…"; small.innerHTML="&nbsp;"; bb.className=ba.className="";
+  await ensureCtx(); if(!introOn) return; if(!liveBufs){ endIntro(); return; }
+  stop(); for(const s of introSrcs){ try{ s.stop(); }catch(e){} } introSrcs=[]; window.__introCount=(window.__introCount||0)+1; bus.master.gain.setValueAtTime(1, ctx.currentTime);
+  const sd=60/state.bpm/4, t0=ctx.currentTime+0.2, BEFORE=1, AFTER=2, t1=t0+BEFORE*STEPS*sd, tEnd=t1+AFTER*STEPS*sd;
+  const hs=takeHits(DEMO,state), one=inRange(57+pc(state.keyRoot-57),57,68), at=(t,f)=>introTimers.push(setTimeout(f,Math.max(0,(t-ctx.currentTime)*1000)));
+  for(const h of hs) if(h.pos<BEFORE*STEPS){ introSrcs.push(...voice(ctx,liveBufs,bus.chairs.chords,{src:state.chordInst,note:one,dur:h.len,vel:h.vel},t0+h.pos*sd,sd,false));
+    at(t0+h.pos*sd,()=>{ dp.classList.add("hit"); setTimeout(()=>dp.classList.remove("hit"),120); }); }
+  const dst=Object.assign({},state,{beat:state.beat==="click"?"drums":state.beat});
+  for(let s=0;s<AFTER*STEPS;s++) for(const ev of stepEvents(s,dst,prog,{only:DEMO})) introSrcs.push(...voice(ctx,liveBufs,bus.chairs[ev.part],ev,t1+s*sd,sd,false));
+  for(const h of hs) if(h.pos<AFTER*STEPS) at(t1+h.pos*sd,()=>{ dp.classList.add("hit"); big.textContent=chordName(h.bar); setTimeout(()=>dp.classList.remove("hit"),120); });
+  at(t0,()=>{ bb.className="now"; big.textContent="♪"; small.textContent="Before: one plain note, tapped"; });
+  at(t1,()=>{ bb.className="done"; ba.className="now"; small.textContent="After: the same taps as chords, over drums"; });
+  at(tEnd+0.4,()=>endIntro());
+}
+function endIntro(){ if(!introOn) return; introOn=false; introTimers.forEach(clearTimeout); introTimers=[]; for(const s of introSrcs){ try{ s.stop(); }catch(e){} } introSrcs=[];
+  document.getElementById("intro").hidden=true; localStorage.setItem(INTRO_KEY,"1"); if(!localStorage.getItem(GUIDE_KEY)) showGuide(0); }
+document.getElementById("introSkip").onclick=endIntro;
+document.getElementById("demoAgain").onclick=()=>{ if(mode==="rec") return; playIntroDemo(); };
+let guideStep=0;
+function showGuide(i){ guideStep=Math.max(0,Math.min(2,i)); const c=document.getElementById("coach"); c.hidden=false;
+  c.querySelectorAll("li").forEach((li,k)=>li.classList.toggle("on",k===guideStep));
+  document.getElementById("coachBack").disabled=guideStep===0; document.getElementById("coachNext").textContent=guideStep===2?"Got it":"Next";
+  document.querySelectorAll(".spot").forEach(e=>e.classList.remove("spot"));
+  const el=document.querySelector([".vibes",".stage",".more"][guideStep]); if(el){ el.classList.add("spot"); el.scrollIntoView({block:"nearest",behavior:"smooth"}); } }
+function closeGuide(){ document.getElementById("coach").hidden=true; document.querySelectorAll(".spot").forEach(e=>e.classList.remove("spot")); localStorage.setItem(GUIDE_KEY,"1"); }
+document.getElementById("coachNext").onclick=()=>{ if(guideStep>=2) closeGuide(); else showGuide(guideStep+1); };
+document.getElementById("coachBack").onclick=()=>showGuide(guideStep-1);
+document.getElementById("coachX").onclick=closeGuide;
+window.__tapfour = { skipIntro:()=>{ introOn=true; endIntro(); closeGuide(); }, get introOn(){return introOn;}, state, stepEvents, takeHits, voicing, addTake, exportWavBytes, exportMidBytes, exportStemsBytes, loadAll, start:m=>start(m), stop, startRec, files, takes, DEMO,
   liveOn, liveOff, setSustain, voices:liveVoices, tpos:()=>ctx&&transportPos(ctx.currentTime), get sustain(){return sustain;}, get playing(){return playing;}, get mode(){return mode;}, get ctx(){return ctx;}, get missing(){return [...missing];}, get lic(){return lic;} };
 syncInputs(); renderKeys(); render(); licUI(); showLoad(); paintDock(); listOutputs();
 if(navigator.requestMIDIAccess) navigator.requestMIDIAccess().then(a=>{ midiAccess=a; a.onstatechange=refreshMidi; refreshMidi(); }).catch(()=>{ ui.midiNote.textContent="Web MIDI unavailable or blocked in this browser."; });

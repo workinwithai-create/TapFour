@@ -1,3 +1,4 @@
+INIT="localStorage.setItem('tapfour-intro-seen','1');localStorage.setItem('tapfour-guide-done','1');document.addEventListener('DOMContentLoaded',()=>{const m=document.getElementById('more'); if(m) m.open=true})"
 import asyncio, base64, json, sys, re, numpy as np, wave, io
 from playwright.async_api import async_playwright
 URL=sys.argv[1]; OUT=sys.argv[2] if len(sys.argv)>2 else 's9.json'
@@ -11,7 +12,7 @@ async def main():
   res={}
   async with async_playwright() as p:
     br=await p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
-    ctx=await br.new_context(viewport={'width':1100,'height':900},accept_downloads=True); pg=await ctx.new_page(); errs=[]; reqs=[]
+    ctx=await br.new_context(viewport={'width':1100,'height':900},accept_downloads=True); await ctx.add_init_script(INIT); pg=await ctx.new_page(); errs=[]; reqs=[]
     pg.on('pageerror',lambda e:errs.append(str(e))); pg.on('console',lambda m: m.type=='error' and errs.append(m.text)); pg.on('request',lambda r: 'jsdelivr' in r.url and reqs.append(r.url))
     await pg.goto(URL); await pg.click('#tapBtn'); await pg.wait_for_function(LOADED,timeout=120000); await pg.wait_for_function("document.getElementById('tap').classList.contains('hide')")
     res['load']=await pg.text_content('#status'); n0=len(reqs)

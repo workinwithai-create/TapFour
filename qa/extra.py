@@ -1,3 +1,4 @@
+INIT="localStorage.setItem('tapfour-intro-seen','1');localStorage.setItem('tapfour-guide-done','1');document.addEventListener('DOMContentLoaded',()=>{const m=document.getElementById('more'); if(m) m.open=true})"
 import asyncio, base64, json, sys, io, wave, zipfile, mido
 from playwright.async_api import async_playwright
 URL=sys.argv[1]; OUT=sys.argv[2] if len(sys.argv)>2 else 'extra.json'
@@ -16,7 +17,7 @@ async def main():
   r={}
   async with async_playwright() as p:
     br=await p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
-    c=await br.new_context(); pg=await c.new_page(); errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)))
+    c=await br.new_context(); await c.add_init_script(INIT); pg=await c.new_page(); errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)))
     await pg.add_init_script(MOCK); await pg.add_init_script(SINK)
     await pg.goto(URL); await pg.click('#tapBtn'); await pg.wait_for_function(LOADED,timeout=120000); await pg.wait_for_timeout(600)
     m={'midi_in_select':await pg.eval_on_selector('#midiIn','e=>e.value'),'midi_out_select':await pg.eval_on_selector('#midiOut','e=>e.value')}
@@ -90,7 +91,7 @@ async def main():
     t['errors']=errs; r['takes']=t; await c.close()
     # ===== License (mocked Lemon Squeezy API) =====
     L={}
-    c=await br.new_context(); pg=await c.new_page()
+    c=await br.new_context(); await c.add_init_script(INIT); pg=await c.new_page()
     async def lsroute(route):
       req=route.request; body=req.post_data or ''; key=dict(x.split('=') for x in body.split('&') if '=' in x).get('license_key','')
       meta={'store_id':111,'product_id':222} if key.startswith('GOOD') else {'store_id':999,'product_id':222} if key.startswith('WRONGSTORE') else {'store_id':111,'product_id':333}
@@ -113,7 +114,7 @@ async def main():
     r['license']=L; await c.close()
     # ===== Mobile =====
     for dev in ['iPhone 13','Pixel 7']:
-      d=p.devices[dev]; c=await br.new_context(**{k:v for k,v in d.items() if k!='default_browser_type'},accept_downloads=True); mp=await c.new_page(); me=[]; mp.on('pageerror',lambda e:me.append(str(e)))
+      d=p.devices[dev]; c=await br.new_context(**{k:v for k,v in d.items() if k!='default_browser_type'},accept_downloads=True); await c.add_init_script(INIT); mp=await c.new_page(); me=[]; mp.on('pageerror',lambda e:me.append(str(e)))
       await mp.goto(URL); await mp.wait_for_timeout(800)
       x={'gate_visible_before_tap':await mp.is_visible('#tapBtn'),'ios_note_visible':await mp.is_visible('#tap .ios')}
       await mp.screenshot(path=f"mobile_{dev.replace(' ','_')}.png")

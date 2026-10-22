@@ -3,82 +3,114 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TapFour — tap the rhythm, get your chords (real piano + chord MIDI)</title>
-  <meta name="description" content="Play your chord rhythm on ONE key, Space or a pad over your own 4 chords and BPM. TapFour turns every tap into your chords, voice-led on a real piano: hold = length, velocity = velocity, higher = higher voicing. Every loop pass is a new take. Exports WAV + chord MIDI that sit on bar 1." />
+  <title>TapFour · Tap a rhythm. Get chords.</title>
+  <meta name="description" content="Tap a rhythm on one key and TapFour plays it as real piano chords over a beat. Pick a vibe, tap along, export WAV + chord MIDI." />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-<div class="tap" id="tap"><button id="tapBtn">Tap to start audio</button><p>Headphones or speakers, your call. <span class="ios" hidden>iOS: the silent switch mutes Web Audio. Flip it off to hear the piano.</span></p></div>
-<main>
-  <p class="eyebrow">WorkinWithAI · live chairs</p>
-  <h1>TapFour</h1>
-  <p class="lead">You know the rhythm your chords should hit, but you can't play the chords, and dragging blocks around a piano roll kills the vibe. Type your BPM and 4 chords, then tap the rhythm on any one key, Space, or a pad over a real band. Every tap becomes your chord for that bar, voice-led on a real piano. How long you hold sets the length, how hard you hit sets the velocity, and how high you tap sets how high the voicing sits. Every loop pass is a new take. Export a WAV and a chord MIDI file that sit on bar 1. Nothing is uploaded, no AI sounds.</p>
-  <p class="status" id="status">Seating piano and band…</p>
-  <p class="status ios" hidden>iOS: the silent switch mutes Web Audio.</p>
-  <p class="eyebrow">Your loop</p>
-  <div class="row inputs">
-    <label>BPM <input id="bpm" type="number" min="60" max="180" step="1" /></label>
-    <label>Key (chord 1 root) <select id="key"></select></label>
-    <label class="grow">4 chords <input id="chords" placeholder="Am7 Dm7 G Cmaj7" /><small id="chordErr"></small></label>
-    <label>Chord sound <select id="chordInst"><option value="piano">Acoustic grand piano</option><option value="ep">Electric piano</option></select></label>
-    <label>Export bars <select id="bars"><option>4</option><option selected>8</option><option>16</option></select></label>
-  </div>
-  <p class="eyebrow">Presets (demos)</p>
-  <div class="row" id="grooves"></div>
-  <p class="eyebrow">Tap it</p>
-  <section class="live">
-  <div class="pads" id="pads"></div>
-  <p id="liveHint" class="hint"></p>
-  <div class="row inputs">
-    <button class="mini rec" id="recBtn">● Record</button>
-    <label class="chk"><span><input type="checkbox" id="recClick" /> Hi-hat click while recording</span></label>
-    <label class="chk"><span><input type="checkbox" id="layer" /> Layer: keep earlier takes looping</span></label>
-    <label class="chk"><span><input type="checkbox" id="legato" /> Legato: a new tap cuts the last chord</span></label>
-    <label class="chk"><span><input type="checkbox" id="pitchLift" /> MIDI key height picks voicing height</span></label>
-  </div>
-  <p class="status">One bar of count-in, then tap. Recording loops until you stop it, and every 4-bar pass becomes its own take. Keys: <b>Space</b> or <b>K</b> = mid voicing, <b>J</b> = low, <b>L</b> = high. A MIDI keyboard or pad controller works too: any note is a tap, velocity and the sustain pedal are kept.</p>
-  <p class="eyebrow">Takes</p>
-  <small id="takeInfo" class="status"></small>
-  <div id="takes" class="takes"></div>
-  <div class="row inputs"><button class="mini" id="exportStems">Export takes (WAV stems .zip)</button><button class="mini" id="clearTakes">Clear takes</button></div>
-  </section>
-  <p class="eyebrow">Grid · 4 bars · your chords</p>
-  <p class="status" id="gridTitle"></p>
-  <div class="grid" id="grid"></div>
-  <p class="eyebrow">How your taps become chords</p>
-  <div class="row" id="recipes"></div>
-  <p class="eyebrow">Chairs</p>
-  <div class="row" id="chairs"></div>
-  <p class="eyebrow">Play along live</p>
-  <section class="live">
-  <div class="row inputs">
-    <label>MIDI in <select id="midiIn"><option value="">(none)</option></select></label>
-    <label>Live mode <select id="liveInst"><option value="tap">Tap chords (any key = this bar's chord)</option><option value="piano">Piano notes</option><option value="ep">Electric piano notes</option><option value="bass">Finger bass notes</option><option value="pad">String pad notes (hold)</option></select></label>
-    <label>Live level <input id="liveGainIn" type="range" min="0" max="1" step="0.01" /></label>
-    <label class="chk"><span><input type="checkbox" id="midiTransport" /> MIDI Start/Stop messages run transport</span></label>
-  </div>
-  <div class="kbrow"><button class="mini" id="liveOctDn" aria-label="Octave down">◀</button><div id="miniKeys" class="minikeys"></div><button class="mini" id="liveOctUp" aria-label="Octave up">▶</button><small id="liveOctLbl"></small></div>
-  <p class="status">Velocity works from a MIDI controller. The sustain pedal (CC64) holds chords and notes. Notes never start or stop the band. In note modes, A W S E D F T G Y H U J K play C to C and Z / X change octave. ● Record captures Tap mode.</p>
-  </section>
-  <p class="eyebrow">Audio output</p>
-  <div class="row inputs"><label>Output device <select id="audioOut"><option value="">System default</option></select></label><small id="audioOutNote" class="status"></small></div>
-  <p class="eyebrow">Web MIDI out</p>
-  <div class="row inputs">
-    <label>Out <select id="midiOut"><option value="">(none)</option></select></label>
-    <small id="midiNote">Out while playing: bass ch1, your chords ch2, pad ch3, kit ch10 (GM 36/38/42).</small>
-  </div>
-  <p class="eyebrow">License</p>
-  <div class="row inputs"><span id="licState" class="status"></span><input id="licKey" placeholder="Lemon Squeezy license key" aria-label="License key" /><button class="mini" id="licBtn">Unlock</button><button class="mini" id="licOff" hidden>Remove key</button><a class="mini" id="buy" target="_blank" rel="noopener">Buy</a></div>
-  <p class="status">Samples: acoustic grand piano, electric piano, finger bass and string ensemble from FluidR3_GM (Frank Wen, CC BY 3.0) via gleitz/midi-js-soundfonts pinned @044fab8. Backing kit (kick, snare, closed hi-hat) from Virtuosity Drums by Versilian / sfzinstruments (CC0), pinned @9f04cf9. Every piano, bass and pad semitone used is sampled, so nothing is pitch-shifted. Code MIT.</p>
-</main>
-<div class="dock">
-  <button id="playA">A · Band only</button>
-  <button id="playB">B · Band + your chords</button>
-  <button class="ghost" id="stop">Stop</button>
-  <button class="ghost rec" id="recBtn2">● Record</button>
-  <button class="ghost" id="exportWav">Export WAV</button>
-  <button class="ghost" id="exportMid">Export MIDI</button>
+<div class="tap" id="tap"><h2 class="gatehead">Tap a rhythm. Get chords.</h2><button id="tapBtn">Tap to start</button><p>Sound on. <span class="ios" hidden>iPhone: flip the silent switch off to hear it.</span></p></div>
+
+<div class="intro" id="intro" hidden>
+  <h2>Tap a rhythm. Get chords.</h2>
+  <div class="phases"><span id="phBefore">1 · You tap one note</span><span class="arrow">→</span><span id="phAfter">2 · TapFour plays chords + drums</span></div>
+  <div class="demopad" id="demoPad"><b id="demoBig">Loading the piano…</b><small id="demoSmall">&nbsp;</small></div>
+  <button class="mini ghost" id="introSkip">Skip · let me try</button>
 </div>
+
+<div class="coach" id="coach" hidden role="dialog" aria-label="How TapFour works">
+  <button class="x" id="coachX" aria-label="Close guide">×</button>
+  <ol id="coachSteps">
+    <li data-step="0"><b>1. Pick a vibe</b><span>Choose a chord progression up top. They all sound good.</span></li>
+    <li data-step="1"><b>2. Tap along</b><span>Press <b>● Record</b>, wait for the 4 count-in clicks, then tap the big pad or Space to the beat. Hold longer = longer chord.</span></li>
+    <li data-step="2"><b>3. Export</b><span>Open <b>More → Save</b> to download a WAV and a MIDI file for your music app.</span></li>
+  </ol>
+  <div class="coachnav"><button class="mini ghost" id="coachBack">Back</button><button class="mini" id="coachNext">Next</button></div>
+</div>
+
+<main>
+  <header class="top"><div><p class="eyebrow">TapFour</p><h1>Tap a rhythm. Get chords.</h1></div><button class="mini ghost" id="demoAgain">▶ Hear the demo</button></header>
+
+  <section class="vibes"><div class="vibehead"><span class="label">1 · Pick a vibe</span>
+    <label class="inl">Key <select id="key"></select></label>
+    <label class="inl">Speed <input id="bpm" type="number" min="60" max="180" step="1" /> BPM</label></div>
+    <div class="row chips" id="grooves"></div>
+    <details class="edit" id="editChords"><summary>Edit chords</summary>
+      <div class="row inputs">
+        <label class="grow">Your 4 chords <input id="chords" placeholder="Am7 Dm7 G Cmaj7" /><small id="chordErr"></small></label>
+        <label>Chord sound <select id="chordInst"><option value="piano">Grand piano</option><option value="ep">Electric piano</option></select></label>
+      </div>
+      <p class="status">Type 4 chords like <b>Am7 Dm7 G Cmaj7</b>. Allowed: m, 7, m7, maj7, dim, sus2, sus4. The first chord sets the key.</p>
+    </details>
+  </section>
+
+  <section class="stage">
+    <span class="label">2 · Tap along</span>
+    <div class="pads" id="pads"></div>
+    <div class="strip" id="strip"></div>
+    <div class="transport">
+      <button class="big play" id="playB">▶ Play beat</button>
+      <button class="big rec" id="recBtn">● Record</button>
+      <button class="big ghost" id="stop">■ Stop</button>
+    </div>
+    <p id="liveHint" class="hint"></p>
+    <p class="status" id="status">Loading the piano and drums…</p>
+  </section>
+
+  <details class="more" id="more"><summary><span class="label">3 · More</span> Save your loop, takes, timing, sound and devices</summary>
+
+    <h3 id="saveHead">Save</h3>
+    <div class="row inputs">
+      <button class="mini" id="exportWav">Download audio (WAV)</button>
+      <button class="mini" id="exportMid">Download chords (MIDI)</button>
+      <label>Length <select id="bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label>
+    </div>
+    <p class="status">The WAV is studio-ready (48 kHz, 24-bit) and starts exactly on the first beat, so it lines up in any music app. The MIDI file has your chords on their own track.</p>
+
+    <h3>Your takes</h3>
+    <p class="status">Each time the 4 bars loop while recording, that pass is saved as a new take. The newest one plays.</p>
+    <small id="takeInfo" class="status"></small>
+    <div id="takes" class="takes"></div>
+    <div class="row inputs"><button class="mini" id="exportStems">Download each take (zip of WAVs)</button><button class="mini ghost" id="clearTakes">Delete all takes</button>
+      <label class="chk"><span><input type="checkbox" id="layer" /> Play all takes together</span></label></div>
+    <p class="status" id="gridTitle"></p>
+    <div class="grid" id="grid"></div>
+
+    <h3>Timing</h3>
+    <p class="status">How your taps line up with the beat.</p>
+    <div class="row" id="recipes"></div>
+    <div class="row inputs">
+      <label class="chk"><span><input type="checkbox" id="legato" /> A new tap stops the last chord</span></label>
+      <label class="chk"><span><input type="checkbox" id="recClick" /> Extra click while recording</span></label>
+    </div>
+
+    <h3>Sound</h3>
+    <div class="row inputs"><label>Backing <select id="beat"><option value="band">Drums, bass and strings</option><option value="drums">Drums only</option><option value="click">Just a click</option></select></label>
+      <button class="mini ghost" id="playA">Hear the backing without your chords</button></div>
+    <div class="row" id="chairs"></div>
+
+    <h3>Devices</h3>
+    <div class="row inputs">
+      <label>Speakers / headphones <select id="audioOut"><option value="">System default</option></select></label><small id="audioOutNote" class="status"></small>
+    </div>
+    <div class="row inputs">
+      <label>MIDI keyboard in <select id="midiIn"><option value="">(none)</option></select></label>
+      <label>MIDI out <select id="midiOut"><option value="">(none)</option></select></label>
+      <label>Keys play <select id="liveInst"><option value="tap">Chords (any key = this bar's chord)</option><option value="piano">Piano notes</option><option value="ep">Electric piano notes</option><option value="bass">Bass notes</option><option value="pad">String notes</option></select></label>
+      <label>Keys volume <input id="liveGainIn" type="range" min="0" max="1" step="0.01" /></label>
+    </div>
+    <div class="row inputs">
+      <label class="chk"><span><input type="checkbox" id="pitchLift" /> Higher MIDI key = higher chord</span></label>
+      <label class="chk"><span><input type="checkbox" id="midiTransport" /> Let my MIDI gear's Start/Stop buttons start and stop TapFour</span></label>
+    </div>
+    <small id="midiNote" class="status">MIDI out while playing: bass ch1, your chords ch2, strings ch3, drums ch10.</small>
+    <div class="kbrow"><button class="mini" id="liveOctDn" aria-label="Octave down">◀</button><div id="miniKeys" class="minikeys"></div><button class="mini" id="liveOctUp" aria-label="Octave up">▶</button><small id="liveOctLbl"></small></div>
+
+    <h3>Unlock longer exports</h3>
+    <div class="row inputs"><span id="licState" class="status"></span><input id="licKey" placeholder="License key" aria-label="License key" /><button class="mini" id="licBtn">Unlock</button><button class="mini" id="licOff" hidden>Remove key</button><a class="mini" id="buy" target="_blank" rel="noopener">Buy</a></div>
+
+    <p class="status credits">Sounds: grand piano, electric piano, bass and strings from FluidR3_GM (Frank Wen, CC BY 3.0) via gleitz/midi-js-soundfonts pinned @044fab8. Drums (kick, snare, hi-hat) from Virtuosity Drums by Versilian / sfzinstruments (CC0), pinned @9f04cf9. Real recordings, nothing synthesized. Code MIT. Nothing you play is uploaded.</p>
+  </details>
+</main>
 <script src="./app.js" defer></script>
 </body>
 </html>
