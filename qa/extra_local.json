@@ -1,0 +1,279 @@
+{
+ "midi": {
+  "midi_in_select": "fake-in",
+  "midi_out_select": "fake-out",
+  "tap_chord_latency_and_voicing_height": [
+   {
+    "note": 48,
+    "lift": 0,
+    "chord_notes": [
+     55,
+     57,
+     60,
+     64
+    ],
+    "ms_to_audio": 11.7,
+    "sched_delay_ms": 0
+   },
+   {
+    "note": 60,
+    "lift": 1,
+    "chord_notes": [
+     57,
+     60,
+     64,
+     67
+    ],
+    "ms_to_audio": 2.5,
+    "sched_delay_ms": 0
+   },
+   {
+    "note": 72,
+    "lift": 2,
+    "chord_notes": [
+     60,
+     64,
+     67,
+     69
+    ],
+    "ms_to_audio": 4.6,
+    "sched_delay_ms": 0
+   },
+   {
+    "note": 60,
+    "lift": 1,
+    "chord_notes": [
+     57,
+     60,
+     64,
+     67
+    ],
+    "ms_to_audio": 3.5,
+    "sched_delay_ms": 0
+   },
+   {
+    "note": 60,
+    "lift": 1,
+    "chord_notes": [
+     57,
+     60,
+     64,
+     67
+    ],
+    "ms_to_audio": 2.6,
+    "sched_delay_ms": 0
+   }
+  ],
+  "velocity_gain_v20_v127": [
+   0.062494156703350005,
+   1
+  ],
+  "notes_started_transport": false,
+  "chord_held_while_key_down": true,
+  "chord_released_on_noteoff": true,
+  "sustain": {
+   "held_after_noteoff_with_pedal": true,
+   "released_on_pedal_up": true
+  },
+  "piano_note_mode_single_note": [
+   64
+  ],
+  "pad_held_4s": true,
+  "notes_started_transport_after_all": false,
+  "start_msg_ignored_when_off": true,
+  "start_msg_starts_when_on": true,
+  "scheduler_during_live": {
+   "steps": 28,
+   "max_step_dev_ms": 0.0
+  },
+  "live_tap_follows_bar_chord": [
+   "57-60-64-67",
+   "57-60-62-65"
+  ],
+  "midi_out_while_playing": {
+   "note_ons": 61,
+   "bass_ch1": 6,
+   "chords_ch2": 27,
+   "pad_ch3": 7,
+   "kit_ch10": 21
+  },
+  "stop_msg_stops": true,
+  "computer_keys_space_j": [
+   1,
+   0
+  ],
+  "onscreen_pad_high": [
+   2
+  ],
+  "output_select": {
+   "options": [
+    "System default",
+    "Studio Headphones"
+   ],
+   "sinkCalls": [
+    "hp1"
+   ],
+   "note": "Playing through the selected output.",
+   "persisted": "hp1"
+  },
+  "errors": []
+ },
+ "takes": {
+  "status_rec": "Recording: one bar count-in, then tap your chord rhythm (Space, J K L, the pads, or any MIDI key). Every 4-bar pass becomes a new take. Press Stop when done.",
+  "bpm_locked": true,
+  "takes": [
+   {
+    "n": 1,
+    "mode": "silent",
+    "src": "tapped",
+    "hits": [
+     [
+      0.1533,
+      8,
+      1
+     ],
+     [
+      8.26,
+      4,
+      2
+     ]
+    ]
+   },
+   {
+    "n": 2,
+    "mode": "silent",
+    "src": "tapped",
+    "hits": [
+     [
+      2.18,
+      4,
+      0
+     ],
+     [
+      6.2867,
+      8.0267,
+      1
+     ],
+     [
+      14.3133,
+      4.1067,
+      1
+     ]
+    ]
+   },
+   {
+    "n": 3,
+    "mode": "loop",
+    "src": "tapped",
+    "hits": [
+     [
+      1.1133,
+      15.7333,
+      1
+     ]
+    ]
+   }
+  ],
+  "separate_takes": true,
+  "modes_newest_loop_older_silent": [
+   "silent",
+   "silent",
+   "loop"
+  ],
+  "hold_lengths_steps_expected_8_4_4_8_4_16": [
+   8,
+   4,
+   4,
+   8.03,
+   4.11,
+   15.73
+  ],
+  "all_hits_in_bounds": true,
+  "midi": {
+   "name": "tapfour-sixteenths-150bpm-Am.mid",
+   "type": 1,
+   "tracks": [
+    "tapfour Am",
+    "Finger bass (FluidR3 Electric Bass finger)",
+    "String pad (FluidR3 String Ensemble 1)",
+    "Backing kit (Virtuosity Drums, CC0)",
+    "Chords: Take 1 (loop)",
+    "Chords: Take 2 (silent)",
+    "Chords: Take 3 (loop)"
+   ],
+   "length_s": 6.4
+  },
+  "stems": {
+   "zip": "tapfour-takes-150bpm-Am.zip",
+   "files": {
+    "tapfour-take1-150bpm-Am.wav": {
+     "sr": 48000,
+     "bits": 24,
+     "frames": 307200
+    },
+    "tapfour-take2-150bpm-Am.wav": {
+     "sr": 48000,
+     "bits": 24,
+     "frames": 307200
+    },
+    "tapfour-take3-150bpm-Am.wav": {
+     "sr": 48000,
+     "bits": 24,
+     "frames": 307200
+    }
+   }
+  },
+  "takes_survive_reload": 3,
+  "errors": []
+ },
+ "license": {
+  "buy_unconfigured": "Checkout opening soon \u00b7 $19 once",
+  "unconfigured_key": "Checkout is not live yet. License keys cannot be checked until the store is set up.",
+  "unconfigured_unlocked": false,
+  "demo_gate_8bar_wav": "Demo: 4-bar WAV export. Unlock below for 8/16 bars.",
+  "BAD-KEY": {
+   "state": "license_key not found",
+   "valid": false
+  },
+  "WRONGSTORE-KEY": {
+   "state": "That key is for a different product.",
+   "valid": false
+  },
+  "OTHERPRODUCT-KEY": {
+   "state": "That key is for a different product.",
+   "valid": false
+  },
+  "GOOD-KEY": {
+   "state": "Licensed: 8 and 16-bar WAV and take-stem exports unlocked.",
+   "valid": true
+  },
+  "after_remove_valid": false,
+  "revoked_relocks_on_reload": true
+ },
+ "iPhone 13": {
+  "gate_visible_before_tap": true,
+  "ios_note_visible": true,
+  "gate_hidden_after_tap": true,
+  "ctx_state": "running",
+  "overflow_px": 0,
+  "playing": true,
+  "pad_tap_logged": 2,
+  "stopped": true,
+  "grid_cell_w_px": 16.9,
+  "wav_download": "tapfour-sixteenths-92bpm-Am.wav",
+  "errors": []
+ },
+ "Pixel 7": {
+  "gate_visible_before_tap": true,
+  "ios_note_visible": false,
+  "gate_hidden_after_tap": true,
+  "ctx_state": "running",
+  "overflow_px": 0,
+  "playing": true,
+  "pad_tap_logged": 2,
+  "stopped": true,
+  "grid_cell_w_px": 18.2,
+  "wav_download": "tapfour-sixteenths-92bpm-Am.wav",
+  "errors": []
+ }
+}

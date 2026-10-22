@@ -1,0 +1,132 @@
+{
+ "load": "Piano and band seated 140/140 \u00b7 live FluidR3 + CC0 kit",
+ "c1": {
+  "name": "tapfour-sixteenths-92bpm-Am.wav",
+  "sr": 48000,
+  "bits": 24,
+  "channels": 2,
+  "frames": 1001739,
+  "expected": 1001739,
+  "exact": true,
+  "peak_dBFS": -1.1,
+  "first_over_1pct_sample": 0,
+  "first_over_1pct_ms": 0.0,
+  "pass": true
+ },
+ "c2": {
+  "total_frames": 4006956,
+  "expected_4x": 4006956,
+  "drift_samples": 0,
+  "seam_diffs": [
+   0.00219,
+   0.00219,
+   0.00219
+  ],
+  "p999_diff": 0.04534,
+  "kit_only_downbeat_xcorr_lag_vs_bar2_samples": [
+   -1,
+   0,
+   2
+  ],
+  "deterministic_maxdiff": 2.3841860752327193e-07,
+  "pass": true
+ },
+ "c6": {
+  "76bpm": {
+   "bar_s": 3.158,
+   "rms_30-50pct": 0.1411,
+   "rms_88-96pct": 0.1108,
+   "end_over_mid": 0.786
+  },
+  "60bpm": {
+   "bar_s": 4.0,
+   "rms_30-50pct": 0.1402,
+   "rms_88-96pct": 0.1398,
+   "end_over_mid": 0.998
+  },
+  "pass": true
+ },
+ "no_redownload_during_export": 0,
+ "midi_file": "tapfour-sixteenths-92bpm-Am.mid",
+ "c4": {
+  "bpm": {
+   "delay_s": 0.226,
+   "bar_s": 2.609,
+   "pass": true
+  },
+  "mute": {
+   "delay_s": 0.212,
+   "bar_s": 2.0,
+   "pass": true
+  },
+  "recipe": {
+   "delay_s": 0.176,
+   "bar_s": 2.0,
+   "pass": true
+  },
+  "key": {
+   "delay_s": 0.43,
+   "bar_s": 2.0,
+   "pass": true
+  },
+  "still_playing_no_restart": true,
+  "pass": true
+ },
+ "c3": {
+  "hidden_s": 30,
+  "playing_on_return": false,
+  "steps_scheduled_after_hide": 0,
+  "active_sources_after": 0,
+  "status": "Stopped (tab hidden). Press play to start again.",
+  "pass": true
+ },
+ "errors": [],
+ "c5": {
+  "status": "Missing instruments, playback and export disabled: Acoustic grand piano, Electric piano, Finger bass, String ensemble, Kit kick, Kit snare, Kit closed hi-hat \u2014 140 file(s) failed, e.g. Acoustic grand piano (FluidR3) (A2.mp3), Acoustic grand piano (FluidR3) (Bb2.mp3), Acoustic grand piano (FluidR3) (",
+  "playB_enabled": false,
+  "export_enabled": false,
+  "record_enabled": false,
+  "kit_only_blocked": "Missing instruments, playback and export disabled: Kit kick, Kit snare, Kit closed hi-hat \u2014 3 file(s) failed, e.g. Kit kick (Virtuosity Drums) (kickmic_kick_snoff_vl3_rr1.flac), Kit snare (Virtuosity ",
+  "pass": true
+ },
+ "c7": {
+  "@main/@gh-pages": 0,
+  "Math.random": 0,
+  "createOscillator": 0,
+  "pinned_shas": [
+   "044fab8e1456bfafc5776e86dfd6bb8697149aef",
+   "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc"
+  ],
+  "voice_to_sample_folders": [
+   [
+    "Acoustic grand piano",
+    "acoustic_grand_piano-mp3"
+   ],
+   [
+    "Electric piano",
+    "electric_piano_1-mp3"
+   ],
+   [
+    "Finger bass",
+    "electric_bass_finger-mp3"
+   ],
+   [
+    "Kit closed hi-hat",
+    "hh"
+   ],
+   [
+    "Kit kick",
+    "kick"
+   ],
+   [
+    "Kit snare",
+    "snare"
+   ],
+   [
+    "String ensemble",
+    "string_ensemble_1-mp3"
+   ]
+  ],
+  "pass": true
+ }
+}

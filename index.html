@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TapFour — tap the rhythm, get your chords (real piano + chord MIDI)</title>
+  <meta name="description" content="Play your chord rhythm on ONE key, Space or a pad over your own 4 chords and BPM. TapFour turns every tap into your chords, voice-led on a real piano: hold = length, velocity = velocity, higher = higher voicing. Every loop pass is a new take. Exports WAV + chord MIDI that sit on bar 1." />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<div class="tap" id="tap"><button id="tapBtn">Tap to start audio</button><p>Headphones or speakers, your call. <span class="ios" hidden>iOS: the silent switch mutes Web Audio. Flip it off to hear the piano.</span></p></div>
+<main>
+  <p class="eyebrow">WorkinWithAI · live chairs</p>
+  <h1>TapFour</h1>
+  <p class="lead">You know the rhythm your chords should hit, but you can't play the chords, and dragging blocks around a piano roll kills the vibe. Type your BPM and 4 chords, then tap the rhythm on any one key, Space, or a pad over a real band. Every tap becomes your chord for that bar, voice-led on a real piano. How long you hold sets the length, how hard you hit sets the velocity, and how high you tap sets how high the voicing sits. Every loop pass is a new take. Export a WAV and a chord MIDI file that sit on bar 1. Nothing is uploaded, no AI sounds.</p>
+  <p class="status" id="status">Seating piano and band…</p>
+  <p class="status ios" hidden>iOS: the silent switch mutes Web Audio.</p>
+  <p class="eyebrow">Your loop</p>
+  <div class="row inputs">
+    <label>BPM <input id="bpm" type="number" min="60" max="180" step="1" /></label>
+    <label>Key (chord 1 root) <select id="key"></select></label>
+    <label class="grow">4 chords <input id="chords" placeholder="Am7 Dm7 G Cmaj7" /><small id="chordErr"></small></label>
+    <label>Chord sound <select id="chordInst"><option value="piano">Acoustic grand piano</option><option value="ep">Electric piano</option></select></label>
+    <label>Export bars <select id="bars"><option>4</option><option selected>8</option><option>16</option></select></label>
+  </div>
+  <p class="eyebrow">Presets (demos)</p>
+  <div class="row" id="grooves"></div>
+  <p class="eyebrow">Tap it</p>
+  <section class="live">
+  <div class="pads" id="pads"></div>
+  <p id="liveHint" class="hint"></p>
+  <div class="row inputs">
+    <button class="mini rec" id="recBtn">● Record</button>
+    <label class="chk"><span><input type="checkbox" id="recClick" /> Hi-hat click while recording</span></label>
+    <label class="chk"><span><input type="checkbox" id="layer" /> Layer: keep earlier takes looping</span></label>
+    <label class="chk"><span><input type="checkbox" id="legato" /> Legato: a new tap cuts the last chord</span></label>
+    <label class="chk"><span><input type="checkbox" id="pitchLift" /> MIDI key height picks voicing height</span></label>
+  </div>
+  <p class="status">One bar of count-in, then tap. Recording loops until you stop it, and every 4-bar pass becomes its own take. Keys: <b>Space</b> or <b>K</b> = mid voicing, <b>J</b> = low, <b>L</b> = high. A MIDI keyboard or pad controller works too: any note is a tap, velocity and the sustain pedal are kept.</p>
+  <p class="eyebrow">Takes</p>
+  <small id="takeInfo" class="status"></small>
+  <div id="takes" class="takes"></div>
+  <div class="row inputs"><button class="mini" id="exportStems">Export takes (WAV stems .zip)</button><button class="mini" id="clearTakes">Clear takes</button></div>
+  </section>
+  <p class="eyebrow">Grid · 4 bars · your chords</p>
+  <p class="status" id="gridTitle"></p>
+  <div class="grid" id="grid"></div>
+  <p class="eyebrow">How your taps become chords</p>
+  <div class="row" id="recipes"></div>
+  <p class="eyebrow">Chairs</p>
+  <div class="row" id="chairs"></div>
+  <p class="eyebrow">Play along live</p>
+  <section class="live">
+  <div class="row inputs">
+    <label>MIDI in <select id="midiIn"><option value="">(none)</option></select></label>
+    <label>Live mode <select id="liveInst"><option value="tap">Tap chords (any key = this bar's chord)</option><option value="piano">Piano notes</option><option value="ep">Electric piano notes</option><option value="bass">Finger bass notes</option><option value="pad">String pad notes (hold)</option></select></label>
+    <label>Live level <input id="liveGainIn" type="range" min="0" max="1" step="0.01" /></label>
+    <label class="chk"><span><input type="checkbox" id="midiTransport" /> MIDI Start/Stop messages run transport</span></label>
+  </div>
+  <div class="kbrow"><button class="mini" id="liveOctDn" aria-label="Octave down">◀</button><div id="miniKeys" class="minikeys"></div><button class="mini" id="liveOctUp" aria-label="Octave up">▶</button><small id="liveOctLbl"></small></div>
+  <p class="status">Velocity works from a MIDI controller. The sustain pedal (CC64) holds chords and notes. Notes never start or stop the band. In note modes, A W S E D F T G Y H U J K play C to C and Z / X change octave. ● Record captures Tap mode.</p>
+  </section>
+  <p class="eyebrow">Audio output</p>
+  <div class="row inputs"><label>Output device <select id="audioOut"><option value="">System default</option></select></label><small id="audioOutNote" class="status"></small></div>
+  <p class="eyebrow">Web MIDI out</p>
+  <div class="row inputs">
+    <label>Out <select id="midiOut"><option value="">(none)</option></select></label>
+    <small id="midiNote">Out while playing: bass ch1, your chords ch2, pad ch3, kit ch10 (GM 36/38/42).</small>
+  </div>
+  <p class="eyebrow">License</p>
+  <div class="row inputs"><span id="licState" class="status"></span><input id="licKey" placeholder="Lemon Squeezy license key" aria-label="License key" /><button class="mini" id="licBtn">Unlock</button><button class="mini" id="licOff" hidden>Remove key</button><a class="mini" id="buy" target="_blank" rel="noopener">Buy</a></div>
+  <p class="status">Samples: acoustic grand piano, electric piano, finger bass and string ensemble from FluidR3_GM (Frank Wen, CC BY 3.0) via gleitz/midi-js-soundfonts pinned @044fab8. Backing kit (kick, snare, closed hi-hat) from Virtuosity Drums by Versilian / sfzinstruments (CC0), pinned @9f04cf9. Every piano, bass and pad semitone used is sampled, so nothing is pitch-shifted. Code MIT.</p>
+</main>
+<div class="dock">
+  <button id="playA">A · Band only</button>
+  <button id="playB">B · Band + your chords</button>
+  <button class="ghost" id="stop">Stop</button>
+  <button class="ghost rec" id="recBtn2">● Record</button>
+  <button class="ghost" id="exportWav">Export WAV</button>
+  <button class="ghost" id="exportMid">Export MIDI</button>
+</div>
+<script src="./app.js" defer></script>
+</body>
+</html>
